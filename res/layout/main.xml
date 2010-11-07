@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:background="#fff">
+
+	<TextView
+	  android:layout_width="fill_parent"
+	  android:layout_height="wrap_content"
+	  android:textColor="#000"
+	  android:scrollbars="vertical"
+	  android:scrollbarAlwaysDrawVerticalTrack="true"
+	  android:scrollbarSize="40dip"
+	  android:fadeScrollbars="false"
+	  android:id="@+id/txt_View"/>
+  	
+</RelativeLayout>
