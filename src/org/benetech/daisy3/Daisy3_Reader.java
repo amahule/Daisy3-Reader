@@ -29,11 +29,6 @@ import android.widget.Toast;
 
 public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteranceCompletedListener {
 
-	//	static String DAISY3_BOOK_PATH = "/sdcard/daisy3/Edison__His_Life_and_Inventions.xml";
-	//	static String DAISY3_BOOK_PATH = "/sdcard/daisy3/Life_and_Letters_of_Charles_.xml";
-		static String DAISY3_BOOK_PATH = "/sdcard/daisy3/Alfred_Tennyson.xml";
-	//	static String DAISY3_BOOK_PATH = "/sdcard/daisy3/The_Writings_of_Abraham_Linc.xml";
-
 	int BOOK_LOADING_COMPLETE = 0;
 	TextView txt_View;
 	private static final int CHECK_TTS_INSTALLED = 0;
@@ -49,7 +44,8 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 	String text_for_speaking;
 	int LOADING_BOOK = 0;
 	boolean isTalking = false;
-	boolean stop_flag = false;
+	boolean isPaused = false;
+	boolean isStopped = false;
 	
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState){
@@ -174,7 +170,7 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 	public void onUtteranceCompleted(String utteranceId) {
 		System.out.println("***** Utterance Completed ****");
 		
-		if(!stop_flag){
+		if(!isStopped && !isPaused){
 			
 			START += INCREMENT;
 			END += INCREMENT;
@@ -193,20 +189,21 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		public void onCallStateChanged(int state, String incomingNumber)
 		{
 			if(state == TelephonyManager.CALL_STATE_RINGING) {
-				stopTalking();
+				stopTalking("Incoming Call");
 				finish();
 			}
 		}
 	};
 
 	//Stop talking
-	private void stopTalking(){
+	private void stopTalking(String status){
 		System.out.println("************ Inside stop talking **********");
 		if(mTts!=null){
 			System.out.println("************  Inside stop talking. mTts != null ************ ");
 			mTts.stop();
 		}
-		Toast.makeText(this, "Text To Speech stopped", Toast.LENGTH_SHORT).show();
+		
+		Toast.makeText(this, status, Toast.LENGTH_SHORT).show();
 	}
 
 	/**
@@ -222,18 +219,48 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		menuinflater.inflate(R.menu.menu_options, menu);
 		return true;
 	}
+	
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu){
+		if(isStopped){
+			MenuItem speak = menu.findItem(R.id.speak);
+			speak.setTitle("Speak");
+		}
+		return true;
+	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem menuitem){
 		switch(menuitem.getItemId()){
 			case R.id.speak :
-				if(!isTalking){
+
+				//When speak is pressed for first time or after stop has been pressed
+				if(menuitem.getTitle().equals("Speak") && !isTalking && !isPaused){
 					START = 0;
 					END = INCREMENT;
 					speakString(text_for_speaking.substring(0, INCREMENT));
 					Toast.makeText(this, "Text To Speech started", Toast.LENGTH_SHORT).show();
 					isTalking = true;
-					stop_flag = false;
+					isStopped = false;
+					menuitem.setTitle("Pause");
+				}
+				
+				//Speak pressed after pause was pressed
+				else if(menuitem.getTitle().equals("Speak") && isPaused){
+					System.out.println("***** Inside speak after paused*******");
+					System.out.println("START = "+START+", END = "+END);
+					speakString(text_for_speaking.substring(START, END));
+					menuitem.setTitle("Pause");
+					
+					isPaused = false;
+				}
+				
+				//When pause is pressed (pause will be shown in this case)
+				else if(menuitem.getTitle().equals("Pause") ){
+					isPaused = true;
+					isTalking = false;
+					stopTalking("Text to speech paused");
+					menuitem.setTitle("Speak");
 				}
 				
 				break;
@@ -243,11 +270,12 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 				break;
 
 			case R.id.stop :
-				if(!stop_flag)
+				if(!isStopped)
 				{
-					stop_flag = true;
-					stopTalking();
+					isStopped = true;
+					stopTalking("Text to speech stopped");
 					isTalking = false;
+					isPaused = false;
 				}
 				break;
 				
@@ -282,7 +310,7 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 
 	@Override
 	public void  onBackPressed(){
-		stopTalking();
+		stopTalking("Back button pressed");
 		super.onBackPressed();
 	}
 

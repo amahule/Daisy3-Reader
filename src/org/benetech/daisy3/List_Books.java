@@ -4,9 +4,12 @@ import java.io.File;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager.LayoutParams;
@@ -86,13 +89,28 @@ public class List_Books extends ListActivity{
 					}
 					
 					// When clicked, show a toast with selected book name
-					Toast.makeText(getApplicationContext(), flag_valid_file_found ? ((TextView) view).getText() : "Valid file not found",
-							Toast.LENGTH_SHORT).show();
+					Toast.makeText(getApplicationContext(), flag_valid_file_found ? ((TextView) view).getText() : "Invalid Daisy 3 file",
+							Toast.LENGTH_LONG).show();
 					flag_valid_file_found = false;
 				}
 			});
 		}
 	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu){
+		menu.add(Menu.NONE, Menu.NONE, Menu.NONE, "Exit");
+		return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem menuitem){
+		if(menuitem.getTitle().equals("Exit")){
+			finish();
+		}
+		return true;
+	}
+	
 	
 	public void call_alert_dialog(String title, String message){
 		AlertDialog.Builder builder=new AlertDialog.Builder(this);
@@ -100,8 +118,16 @@ public class List_Books extends ListActivity{
 		builder
 			.setTitle(title)
 			.setMessage(message)
-			.setPositiveButton(R.string.dialog_close_button, null)
+			.setPositiveButton(R.string.dialog_close_button, new close_button_listener())
 			.show();
+	}
+	
+	
+	private class close_button_listener implements DialogInterface.OnClickListener{
+		public void onClick(DialogInterface d,int which){
+			if(which==DialogInterface.BUTTON_POSITIVE)
+				finish();
+		}
 	}
 	
 	public void open_book(String file_to_be_opened){

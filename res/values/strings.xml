@@ -10,5 +10,5 @@
 		directory representing a DAISY3 book.
 		</string>
     <string name="dialog_close_button">Close</string>
-    <string name="app_description">A Daisy3 Ebook Reader</string>
+    <string name="app_description">A Daisy-3 Ebook Reader</string>
 </resources>
