@@ -9,7 +9,7 @@
 		android:orientation="vertical"
 		android:layout_height="wrap_content"
 		android:layout_width="fill_parent"
-		android:layout_marginTop="100dip">
+		android:layout_marginTop="60dip">
 
 		<TextView
 			android:layout_width="wrap_content"
@@ -28,7 +28,7 @@
 		  	android:textSize="18dip"
 		  	android:layout_width="fill_parent"
 		  	android:layout_height="wrap_content"
-			android:layout_marginTop="50dip"/>
+			android:layout_marginTop="40dip"/>
 	  	
 	  	<Button
 		  	android:id="@+id/btn_Exit"
@@ -37,7 +37,7 @@
 	  		android:textSize="18dip"
 	  		android:layout_width="fill_parent"
 	  		android:layout_height="wrap_content"
-	  		android:layout_marginTop="30dip"/>
+	  		android:layout_marginTop="20dip"/>
 
   </LinearLayout>
 </LinearLayout>

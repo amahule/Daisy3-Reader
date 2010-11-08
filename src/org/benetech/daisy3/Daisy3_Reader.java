@@ -7,6 +7,7 @@ import java.util.HashMap;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -64,7 +65,11 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		text_for_speaking = savedInstanceState.getString("Book");
 	}
 	
-	
+	//Ignore the screen orientation changes 
+	@Override
+	public void onConfigurationChanged(Configuration newConfig){
+		super.onConfigurationChanged(newConfig);
+	}
 	
 	
 	@Override
@@ -266,6 +271,13 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 				break;
 
 			case R.id.Exit :
+				if(!isStopped)
+				{
+					isStopped = true;
+					stopTalking("Text to speech stopped");
+					isTalking = false;
+					isPaused = false;
+				}
 				finish();
 				break;
 

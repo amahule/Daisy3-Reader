@@ -16,7 +16,7 @@ import org.xml.sax.SAXException;
 public class Daisy3_Parser {
 
 	/**
-	 * Parse the inout file using DOM parser and return a String
+	 * Parse the input file using DOM parser and return a String
 	 * @param daisy3_file The File to be parsed
 	 * @return String Selective Contents of the file i.e. not all elements from the XML
 	 */

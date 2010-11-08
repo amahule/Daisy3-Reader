@@ -13,7 +13,9 @@
 			</intent-filter>
 		</activity>
 
-		<activity android:name=".Daisy3_Reader">
+		<activity android:name=".Daisy3_Reader"
+				  android:screenOrientation="portrait"
+				  android:configChanges="orientation|keyboardHidden">
 		</activity>
 		
 		<activity android:name=".List_Books">
