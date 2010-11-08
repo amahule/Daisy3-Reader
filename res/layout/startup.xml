@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="horizontal"
+	android:background="#fff">
+
+	<LinearLayout
+		android:orientation="vertical"
+		android:layout_height="wrap_content"
+		android:layout_width="fill_parent"
+		android:layout_marginTop="100dip">
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:text="@string/app_description"
+			android:typeface="sans"
+			android:textColor="#000"
+			android:textSize="20dip"/>
+			
+					  
+		<Button
+		  	android:id="@+id/btn_openbook"
+		  	android:textStyle="bold"
+		  	android:text="Open Book"
+		  	android:layout_width="fill_parent"
+		  	android:layout_height="wrap_content"
+			android:layout_marginTop="40dip"/>
+	  	
+	  	<Button
+		  	android:id="@+id/btn_Exit"
+	  		android:text="Exit"
+	  		android:textStyle="bold"
+	  		android:layout_width="fill_parent"
+	  		android:layout_height="wrap_content"
+	  		android:layout_marginTop="20dip"/>
+
+  </LinearLayout>
+</LinearLayout>

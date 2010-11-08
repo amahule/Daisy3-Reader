@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello"></string>
-    <string name="app_name">Daisy3 Reader</string>
+ 	<string name="app_name">Daisy3 Reader</string>
+    <string name="dialog_no_file_found_title">No Daisy3 book found</string>
+    <string name="dialog_no_file_found_message">
+	Steps for getting daisy 3 books on sdcard:
+	1. Create a directory /sdcard/daisy3
+	2. Copy the DAISY3 book (which is itself a directory) inside daisy3 directory.
+	3. Thus a DAISY3 book will reside as: /sdcard/daisy3/Sample_Book, where "Sample_Book" is a 
+		directory representing a DAISY3 book.
+		</string>
+    <string name="dialog_close_button">Close</string>
+    <string name="app_description">A Daisy3 Ebook Reader</string>
 </resources>

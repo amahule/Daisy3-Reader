@@ -2,23 +2,12 @@ package org.benetech.daisy3;
 
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
 import android.app.Activity;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
@@ -30,10 +19,13 @@ import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteranceCompletedListener {
 
@@ -42,21 +34,22 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		static String DAISY3_BOOK_PATH = "/sdcard/daisy3/Alfred_Tennyson.xml";
 	//	static String DAISY3_BOOK_PATH = "/sdcard/daisy3/The_Writings_of_Abraham_Linc.xml";
 
-	static int BOOK_LOADING_COMPLETE = 0;
+	int BOOK_LOADING_COMPLETE = 0;
 	TextView txt_View;
 	private static final int CHECK_TTS_INSTALLED = 0;
 	private static final String PARAGRAPHUTTERANCE="PARAGRAPHUTTERANCE";
 	static final int ACTIVE = 1;
 	static final int INACTIVE = 0;
-	private int state = INACTIVE;
+	boolean day_flag = true;
 
 	private TextToSpeech mTts=null;
 	HashMap<String,String> hashmap;
 	private ProgressDialog pd_spinning;
 	File daisy3_file;
 	String text_for_speaking;
-	static int LOADING_BOOK = 0;
-	
+	int LOADING_BOOK = 0;
+	boolean isTalking = false;
+	boolean stop_flag = false;
 	
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState){
@@ -82,13 +75,17 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		setFullScreen();
-		setContentView(R.layout.main);
+		setContentView(R.layout.book_render);
 
 			System.out.println("********** Inside onCreate *********");
 			txt_View = (TextView)findViewById(R.id.txt_View);
 			txt_View.setMovementMethod(new ScrollingMovementMethod());
-			daisy3_file = new File(DAISY3_BOOK_PATH);
-	
+			
+			Bundle bundle = getIntent().getExtras();
+			String filename = bundle.getString("file_to_be_opened");
+
+			daisy3_file = new File(filename);
+			
 			Intent checkIntent = new Intent();
 			checkIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
 			
@@ -98,15 +95,14 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 			 */
 			startActivityForResult(checkIntent, CHECK_TTS_INSTALLED);
 	
-			//Show the progress dialog. Will call onCreateDialog()
-//			showDialog(LOADING_BOOK);
-
+			//Check if the the state was saved previously. (i.e. app was killed for lack of memory)
 			if(savedInstanceState != null && savedInstanceState.containsKey("Book")){
 				System.out.println("******** Length of book = "+savedInstanceState.getString("Book").length()+"********");
 				txt_View.setText(savedInstanceState.getString("Book"));
 				txt_View.setTextSize(18);
 				txt_View.setTypeface(Typeface.DEFAULT);
 			}
+			//Fresh visit to the Activity
 			else{
 				
 				pd_spinning = ProgressDialog.show(Daisy3_Reader.this, null, "Opening book. Please wait...", Boolean.TRUE);
@@ -118,8 +114,7 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 				 */
 				thread_book_load = new Thread(){
 					public void run(){
-						showBook();
-						
+						text_for_speaking = new Daisy3_Parser().parseFile(daisy3_file);						
 						Message msg = Message.obtain();
 						msg.what = BOOK_LOADING_COMPLETE;
 						msg.setTarget(handler);
@@ -136,9 +131,8 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		
 		@Override
 		public void handleMessage(Message msg){
-			//Dismiss the progress dialog once the book loads
-//			dismissDialog(LOADING_BOOK);
-
+			
+			//Dismiss the progress dialog
 			pd_spinning.cancel();
 
 			if(msg.what == BOOK_LOADING_COMPLETE){
@@ -150,75 +144,6 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		}
 	};
 
-	/**
-	 * Parse the book and load it into the TextView of the layout
-	 */
-	public synchronized void showBook(){
-		
-		System.out.println("********* Inside showBook ******");
-		//get the factory
-		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-		Document doc;
-		StringBuffer str_buf = new StringBuffer();
-
-		try{
-			str_buf.append("\n\nThis is a Daisy 3 book, brought to you by Bookshare.\n\n");
-			//Using factory get an instance of document builder
-			DocumentBuilder db = dbf.newDocumentBuilder();
-
-			//parse using builder to get DOM representation of the XML file.
-			//Entire XML document is returned
-			doc = db.parse(daisy3_file);
-
-			//Get the root element of the xml document
-			Element root = doc.getDocumentElement();
-
-			System.out.println("******* Name of the root: "+root);
-			NodeList doctitle = root.getElementsByTagName("doctitle");
-			String str_doctitle = doctitle.item(0).getTextContent();
-			str_buf.append("Book Title: "+str_doctitle+".\n\n");
-
-			StringBuffer authors = new StringBuffer();
-			NodeList docauthor_list = root.getElementsByTagName("docauthor");
-
-			if(docauthor_list != null && docauthor_list.getLength() > 0){
-				for(int i = 0; i < docauthor_list.getLength(); i++){
-					authors.append(docauthor_list.item(i).getTextContent());
-					if(i < docauthor_list.getLength() - 1){
-						authors.append(", ");
-					}
-				}
-			}
-
-			authors.append(".");
-
-			if(docauthor_list.getLength() > 1){
-				str_buf.append("Authors: ");
-			}else if(docauthor_list.getLength() == 1){
-				str_buf.append("Author: ");
-			}
-			str_buf.append(authors+"\n\n\n");
-
-
-			NodeList nodelist = root.getElementsByTagName("p");
-			Node node;
-
-			//Check if the nodelist is populated
-			if(nodelist != null && nodelist.getLength() > 0){
-				for(int i = 0; i < nodelist.getLength(); i++){
-					node = nodelist.item(i);
-					str_buf.append(node.getTextContent()+"\n");
-				}
-				text_for_speaking = str_buf.toString();
-			}
-		}
-		catch(ParserConfigurationException e){
-			e.printStackTrace();}
-		catch(SAXException e){
-			e.printStackTrace();}
-		catch(IOException ioe){
-			ioe.printStackTrace();}
-	}
 
 	protected void onActivityResult(
 			int requestCode, int resultCode, Intent data) {
@@ -238,7 +163,7 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		}
 	}
 	int START = 0;
-	int END = 200;
+	int END = 1000;
 	int INCREMENT= END;
 
 	private void speakString(String s){
@@ -246,65 +171,23 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		mTts.speak(s, TextToSpeech.QUEUE_FLUSH, hashmap);
 	}
 	
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu){
-		menu.add(Menu.NONE, Menu.NONE, Menu.CATEGORY_CONTAINER,"Stop TTS");		
-		menu.add(Menu.NONE, Menu.NONE, Menu.FIRST, "Talk");
-		menu.add(Menu.NONE, Menu.NONE, Menu.NONE, "Exit");
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem menuitem){		
-		if(menuitem.getTitle().equals("Exit")){
-			finish();
-		}
-		else if(menuitem.getTitle().equals("Talk")){
-			mTts.stop();
-			START = 0;
-			END = INCREMENT;
-			speakString(text_for_speaking.substring(0, INCREMENT));
-		}
-		else if(menuitem.getTitle().equals("Stop TTS")){
-			stopTalking();
-		}
-		return true;
-	}
-
-	public void onInit(int status) {
-		mTts.setOnUtteranceCompletedListener(this);
-		setState(ACTIVE);
-	}
-
 	public void onUtteranceCompleted(String utteranceId) {
 		System.out.println("***** Utterance Completed ****");
-		START += END;
-		END += INCREMENT;
 		
-		if(text_for_speaking.charAt(END)!='.'){
-			while(text_for_speaking.charAt(END)!='.')
-			{
-				System.out.println("Char at index: "+END+" = "+text_for_speaking.charAt(END));
-				END++;
-			}
+		if(!stop_flag){
+			
+			START += INCREMENT;
+			END += INCREMENT;
+	
+			System.out.println("*********** START = "+START+". END = "+END+"*****************");
+			System.out.println(text_for_speaking.substring(START, END));
+			
+			speakString(text_for_speaking.substring(START, END));
 		}
-		System.out.println("*********** START = "+START+". END = "+END+"*****************");
-		System.out.println(text_for_speaking.substring(START, END));
-		speakString(text_for_speaking.substring(START, END));
 
 	}
 
-	private void setState(int value){
-		state = value;
-
-		if(state==ACTIVE){
-			//		pausebutton.post(new UpdateControls(UpdateControls.PAUSE));			 
-		}else if(state==INACTIVE) {
-			//		pausebutton.post(new UpdateControls(UpdateControls.PLAY));			 
-		}
-	}
-
+	//Stop talking if there is an incoming call	
 	private PhoneStateListener mPhoneListener = new PhoneStateListener()
 	{
 		public void onCallStateChanged(int state, String incomingNumber)
@@ -316,12 +199,85 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		}
 	};
 
+	//Stop talking
 	private void stopTalking(){
 		System.out.println("************ Inside stop talking **********");
 		if(mTts!=null){
 			System.out.println("************  Inside stop talking. mTts != null ************ ");
 			mTts.stop();
 		}
+		Toast.makeText(this, "Text To Speech stopped", Toast.LENGTH_SHORT).show();
+	}
+
+	/**
+	 * Called for the first time the options menu is shown.
+	 * @param menu - Menu which will hold the items and submenus
+	 */
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu){
+
+		MenuInflater menuinflater = getMenuInflater();
+		
+		//Inflate the xml contents to the menu
+		menuinflater.inflate(R.menu.menu_options, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem menuitem){
+		switch(menuitem.getItemId()){
+			case R.id.speak :
+				if(!isTalking){
+					START = 0;
+					END = INCREMENT;
+					speakString(text_for_speaking.substring(0, INCREMENT));
+					Toast.makeText(this, "Text To Speech started", Toast.LENGTH_SHORT).show();
+					isTalking = true;
+					stop_flag = false;
+				}
+				
+				break;
+
+			case R.id.Exit :
+				finish();
+				break;
+
+			case R.id.stop :
+				if(!stop_flag)
+				{
+					stop_flag = true;
+					stopTalking();
+					isTalking = false;
+				}
+				break;
+				
+			case R.id.day_night :
+				toggle_Day_Night();
+		}
+			return true;
+	}
+
+	/**
+	 * Toggle the status day/night vision on screen
+	 */
+	public void toggle_Day_Night(){
+		RelativeLayout relativelayout = (RelativeLayout)findViewById(R.id.parent_layout);
+
+		//Set night mode - background = black and text = white
+		if(day_flag){
+			relativelayout.setBackgroundColor(Color.BLACK);
+			txt_View.setTextColor(Color.WHITE);
+			day_flag = false;
+		}
+		else{
+			relativelayout.setBackgroundColor(Color.WHITE);
+			txt_View.setTextColor(Color.BLACK);
+			day_flag = true;
+		}
+	}
+
+	public void onInit(int status) {
+		mTts.setOnUtteranceCompletedListener(this);
 	}
 
 	@Override
@@ -354,9 +310,10 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		super.onStop();
 		System.out.println("****** onStop called ****");
 	}
-	
-	
-	
+
+	/**
+	 * Shutdown the Text To Speech when the Activity is being destroyed
+	 */
 	@Override
 	public void onDestroy(){
 		super.onDestroy();
@@ -365,11 +322,13 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		}
 		System.out.println("**** onDestroy called ******");
 		if(mTts != null){
+			mTts.stop();
 			mTts.shutdown();
 			mTts = null;
 		}	
 	}
 
+	//Set the full screen mode
 	public void setFullScreen() {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
