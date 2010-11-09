@@ -13,19 +13,22 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+/**
+ * Class serving the primary purpose of parsing a file
+ * Currently uses a DOM parser.
+ */
 public class Daisy3_Parser {
 
 	/**
 	 * Parse the input file using DOM parser and return a String
 	 * @param daisy3_file The File to be parsed
-	 * @return String Selective Contents of the file i.e. not all elements from the XML
+	 * @return String Parsed contents of the file
 	 */
 	public String parseFile(File daisy3_file){
 		
 		String str_ParsedFile="";
 		
-		System.out.println("********* Inside parseFile ******");
-		//get the factory
+		//Get the instance of the DocumentBuilderfactory 
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		Document doc;
 		StringBuffer str_buf = new StringBuffer();
@@ -44,14 +47,19 @@ public class Daisy3_Parser {
 			//Get the root element of the xml document
 			Element root = doc.getDocumentElement();
 
-			System.out.println("******* Name of the root: "+root);
+			// Get the elements with name "doctitle" 
 			NodeList doctitle = root.getElementsByTagName("doctitle");
+			
+			//Only need to know the first element, which contains the document title
 			String str_doctitle = doctitle.item(0).getTextContent();
 			str_buf.append("Book Title: "+str_doctitle+".\n\n");
 
 			StringBuffer authors = new StringBuffer();
+
+			// Get the elements with name "docauthor" 
 			NodeList docauthor_list = root.getElementsByTagName("docauthor");
 
+			// Retrieve the list of authors (there may be more than one author)
 			if(docauthor_list != null && docauthor_list.getLength() > 0){
 				for(int i = 0; i < docauthor_list.getLength(); i++){
 					authors.append(docauthor_list.item(i).getTextContent());
@@ -70,12 +78,14 @@ public class Daisy3_Parser {
 			}
 			str_buf.append(authors+"\n\n\n");
 
-
+			// Get all the tags with name p, representing a paragraph in the document
 			NodeList nodelist = root.getElementsByTagName("p");
 			Node node;
 
 			//Check if the nodelist is populated
 			if(nodelist != null && nodelist.getLength() > 0){
+				
+				// Iterate through all the retrieved elements and get the text from each of those 
 				for(int i = 0; i < nodelist.getLength(); i++){
 					node = nodelist.item(i);
 					str_buf.append(node.getTextContent()+"\n");
@@ -91,8 +101,6 @@ public class Daisy3_Parser {
 		catch(IOException ioe){
 			ioe.printStackTrace();}
 
-		return str_ParsedFile;		
-
+		return str_ParsedFile;
 	}
-
 }

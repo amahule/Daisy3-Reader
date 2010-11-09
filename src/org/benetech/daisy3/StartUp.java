@@ -21,11 +21,13 @@ public class StartUp extends Activity{
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		setFullScreen();
+		
+		// Makes use of different layout files for potrait and landscape mode
 		setContentView(R.layout.startup);
 
 		btn_OpenBook = (Button)findViewById(R.id.btn_openbook);
+
 		btn_OpenBook.setOnClickListener(new View.OnClickListener(){
-			
 			public void onClick(View v){
 				Intent list_books = new Intent();
 				list_books.setClassName("org.benetech.daisy3","org.benetech.daisy3.List_Books");
@@ -35,7 +37,6 @@ public class StartUp extends Activity{
 		
 		btn_Exit = (Button)findViewById(R.id.btn_Exit);
 		btn_Exit.setOnClickListener(new View.OnClickListener(){
-
 			public void onClick(View v){
 				finish();
 			}
