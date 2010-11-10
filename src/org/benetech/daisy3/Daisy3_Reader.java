@@ -32,6 +32,7 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 
 	int BOOK_LOADING_COMPLETE = 0;
 	int UPDATE_TEXT_VIEW = 1;
+	int PARSING_ERROR = 2;
 	TextView txt_View;
 	private static final int CHECK_TTS_INSTALLED = 0;
 	private static final String PARAGRAPHUTTERANCE="PARAGRAPHUTTERANCE";
@@ -103,6 +104,10 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 
 			daisy3_file = new File(filename);
 			
+			// Make use of Telephony API for detecting incoming call
+			TelephonyManager tm = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
+			tm.listen(mPhoneListener, PhoneStateListener.LISTEN_CALL_STATE);
+			
 			// Intent for checking the TTS installation
 			Intent checkIntent = new Intent();
 			checkIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
@@ -139,8 +144,10 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 						// Parse the file
 						text_for_speaking = new Daisy3_Parser().parseFile(daisy3_file);
 						if(text_for_speaking == null){
-							Toast.makeText(getApplicationContext(), "Error parsing the file", Toast.LENGTH_LONG).show();
-							finish();
+							Message msg = Message.obtain();
+							msg.what = PARSING_ERROR;
+							msg.setTarget(handler);
+							msg.sendToTarget();
 						}
 						
 						// Send a message to handler indicating that the parsing has been completed
@@ -161,12 +168,20 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		@Override
 		public void handleMessage(Message msg){
 			
-
+			// Message received that there is a parsing error
+			if(msg.what == PARSING_ERROR){
+				Toast.makeText(getApplicationContext(), "Error parsing the file", Toast.LENGTH_LONG).show();
+				finish();
+			}
+			
+			// Message received that the loading of book is now complete
 			if(msg.what == BOOK_LOADING_COMPLETE){
 				// Dismiss the progress dialog
 				pd_spinning.cancel();
 				set_TextView(text_for_speaking);
 			}
+			
+			// Message received for updating the text view
 			else if(msg.what == UPDATE_TEXT_VIEW){
 				set_TextView(text_for_speaking.substring(START, END));
 			}
@@ -249,8 +264,8 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 	}
 	
 	/**
-	 * Find a substring that ends in a period or at least space.
-	 * @return String The substring to be processed
+	 * Find a substring that ends in a space and not in the middle of some word
+	 * @return String The substring to be synthesized by TTS engine and shown on screen
 	 */
 	public String find_proper_substring(){
 		int i = 0;
@@ -266,21 +281,23 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		return text_for_speaking.substring(START, END);
 	}
 	
-	//Stop talking if there is an incoming call	
+	//Stop talking if there is an incoming call	and finish this reader activity
 	private PhoneStateListener mPhoneListener = new PhoneStateListener()
 	{
 		@Override
 		public void onCallStateChanged(int state, String incomingNumber)
 		{
 			if(state == TelephonyManager.CALL_STATE_RINGING) {
-				stopTalking("Incoming Call");
+				
+				Toast.makeText(getApplicationContext(), "Incoming Call", Toast.LENGTH_SHORT).show();
+				stopTalking();
 				finish();
 			}
 		}
 	};
 
 	//Stop talking
-	private void stopTalking(String status){
+	private void stopTalking(){
 		if(mTts!=null){
 			mTts.stop();
 		}		
@@ -333,7 +350,7 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 				if(menuitem.getTitle().equals("Speak") && !isTalking && !isPaused){
 					START = 0;
 					END = INCREMENT;
-					speakString(text_for_speaking.substring(START, END));
+					speakString(find_proper_substring());
 					Toast.makeText(this, "Text To Speech started", Toast.LENGTH_LONG).show();
 					isTalking = true;
 					isStopped = false;
@@ -354,7 +371,7 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 				else if(menuitem.getTitle().equals("Pause") ){
 					isPaused = true;
 					isTalking = false;
-					stopTalking("Text to speech paused");
+					stopTalking();
 					Toast.makeText(this, "Text To Speech paused", Toast.LENGTH_LONG).show();
 					menuitem.setTitle("Speak");
 				}
@@ -366,7 +383,7 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 				if(!isStopped)
 				{
 					isStopped = true;
-					stopTalking("");
+					stopTalking();
 					isTalking = false;
 					isPaused = false;
 				}
@@ -379,7 +396,7 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 				{
 					isStopped = true;
 					Toast.makeText(this, "Text To Speech stopped", Toast.LENGTH_LONG).show();
-					stopTalking("Text to speech stopped");
+					stopTalking();
 
 					isTalking = false;
 					isPaused = false;
@@ -394,6 +411,10 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 			return true;
 	}
 
+	/**
+	 * Update the TextView of the layout
+	 * @param content String to be shown in the TextView
+	 */
 	public void set_TextView(String content){
 
 		txt_View.setText(content);
@@ -425,9 +446,10 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		mTts.setOnUtteranceCompletedListener(this);
 	}
 
+	
 	@Override
 	public void  onBackPressed(){
-		stopTalking("Back button pressed");
+		stopTalking();
 		super.onBackPressed();
 	}
 
