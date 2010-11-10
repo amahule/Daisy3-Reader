@@ -138,6 +138,10 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 					public void run(){
 						// Parse the file
 						text_for_speaking = new Daisy3_Parser().parseFile(daisy3_file);
+						if(text_for_speaking == null){
+							Toast.makeText(getApplicationContext(), "Error parsing the file", Toast.LENGTH_LONG).show();
+							finish();
+						}
 						
 						// Send a message to handler indicating that the parsing has been completed
 						Message msg = Message.obtain();
@@ -201,7 +205,7 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 	// For use in TTS. Indicates the start and end of the substring to be spoken
 	int START = 0;
 	int END = 1000;
-	int INCREMENT= END;
+	int INCREMENT= 1000;
 
 	/**
 	 * Wrapper for TTS speak functionality
@@ -236,13 +240,30 @@ public class Daisy3_Reader extends Activity implements OnInitListener, OnUtteran
 		 * don't do any processing then.
 		 */
 		if(!isStopped && !isPaused){
-			START += INCREMENT;
+				
+			START = END;
 			END += INCREMENT;
-	
-			System.out.println("*********** START = "+START+". END = "+END+"*****************");
 			
-			speakString(text_for_speaking.substring(START, END));
+			speakString(find_proper_substring());
 		}
+	}
+	
+	/**
+	 * Find a substring that ends in a period or at least space.
+	 * @return String The substring to be processed
+	 */
+	public String find_proper_substring(){
+		int i = 0;
+		if (text_for_speaking.charAt(END - 1) != ' '){
+			for(i = 0; i < 40; i++){
+				if(text_for_speaking.charAt(END + i) == ' '){
+					END = END + i;
+					break;
+				}
+			}
+		}
+		System.out.println("*********** START = "+START+". END = "+END+"*****************");
+		return text_for_speaking.substring(START, END);
 	}
 	
 	//Stop talking if there is an incoming call	

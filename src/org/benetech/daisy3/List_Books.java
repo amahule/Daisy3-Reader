@@ -45,6 +45,8 @@ public class List_Books extends ListActivity{
 		// List of Daisy 3 books present at the specified location
 		String[] Books = daisy3_books_path.list();
 		
+		//remove the entries that OS X creates with 
+		
 		// The daisy3 directory does not exist
 		if(!daisy3_books_path.exists()){
 			call_alert_dialog("No daisy3 directory found",
@@ -56,6 +58,8 @@ public class List_Books extends ListActivity{
 			call_alert_dialog("No books found",
 					"No books were found inside the daisy3 directory on sdcard");
 		}
+		
+		
 		
 		// Books found inside the daisy3 directory
 		else{

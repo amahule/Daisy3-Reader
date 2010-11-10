@@ -13,6 +13,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import android.widget.Toast;
+
 /**
  * Class serving the primary purpose of parsing a file
  * Currently uses a DOM parser.
@@ -47,52 +49,57 @@ public class Daisy3_Parser {
 			//Get the root element of the xml document
 			Element root = doc.getDocumentElement();
 
-			// Get the elements with name "doctitle" 
-			NodeList doctitle = root.getElementsByTagName("doctitle");
+			if(root != null){
 			
-			//Only need to know the first element, which contains the document title
-			String str_doctitle = doctitle.item(0).getTextContent();
-			str_buf.append("Book Title: "+str_doctitle+".\n\n");
-
-			StringBuffer authors = new StringBuffer();
-
-			// Get the elements with name "docauthor" 
-			NodeList docauthor_list = root.getElementsByTagName("docauthor");
-
-			// Retrieve the list of authors (there may be more than one author)
-			if(docauthor_list != null && docauthor_list.getLength() > 0){
-				for(int i = 0; i < docauthor_list.getLength(); i++){
-					authors.append(docauthor_list.item(i).getTextContent());
-					if(i < docauthor_list.getLength() - 1){
-						authors.append(", ");
+				// Get the elements with name "doctitle" 
+				NodeList doctitle = root.getElementsByTagName("doctitle");
+				
+				//Only need to know the first element, which contains the document title
+				String str_doctitle = doctitle.item(0).getTextContent();
+				str_buf.append("Book Title: "+str_doctitle+".\n\n");
+	
+				StringBuffer authors = new StringBuffer();
+	
+				// Get the elements with name "docauthor" 
+				NodeList docauthor_list = root.getElementsByTagName("docauthor");
+	
+				// Retrieve the list of authors (there may be more than one author)
+				if(docauthor_list != null && docauthor_list.getLength() > 0){
+					for(int i = 0; i < docauthor_list.getLength(); i++){
+						authors.append(docauthor_list.item(i).getTextContent());
+						if(i < docauthor_list.getLength() - 1){
+							authors.append(", ");
+						}
 					}
 				}
-			}
-
-			authors.append(".");
-
-			if(docauthor_list.getLength() > 1){
-				str_buf.append("Authors: ");
-			}else if(docauthor_list.getLength() == 1){
-				str_buf.append("Author: ");
-			}
-			str_buf.append(authors+"\n\n\n");
-
-			// Get all the tags with name p, representing a paragraph in the document
-			NodeList nodelist = root.getElementsByTagName("p");
-			Node node;
-
-			//Check if the nodelist is populated
-			if(nodelist != null && nodelist.getLength() > 0){
-				
-				// Iterate through all the retrieved elements and get the text from each of those 
-				for(int i = 0; i < nodelist.getLength(); i++){
-					node = nodelist.item(i);
-					str_buf.append(node.getTextContent()+"\n");
+	
+				authors.append(".");
+	
+				if(docauthor_list.getLength() > 1){
+					str_buf.append("Authors: ");
+				}else if(docauthor_list.getLength() == 1){
+					str_buf.append("Author: ");
 				}
-				str_ParsedFile = str_buf.toString();
+				str_buf.append(authors+"\n\n\n");
+	
+				// Get all the tags with name p, representing a paragraph in the document
+				NodeList nodelist = root.getElementsByTagName("p");
+				Node node;
+	
+				//Check if the nodelist is populated
+				if(nodelist != null && nodelist.getLength() > 0){
+					
+					// Iterate through all the retrieved elements and get the text from each of those 
+					for(int i = 0; i < nodelist.getLength(); i++){
+						node = nodelist.item(i);
+						str_buf.append(node.getTextContent()+"\n");
+					}
+					str_ParsedFile = str_buf.toString();
+				}
 			}
-
+			else{
+					return null;
+			}
 		}
 		catch(ParserConfigurationException e){
 			e.printStackTrace();}
