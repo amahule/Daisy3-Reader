@@ -97,8 +97,10 @@ public class Daisy3_Parser {
 					str_ParsedFile = str_buf.toString();
 				}
 			}
+			
 			else{
-					return null;
+				// Not a valid daisy3 file	
+				return null;
 			}
 		}
 		catch(ParserConfigurationException e){
