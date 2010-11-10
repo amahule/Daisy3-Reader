@@ -24,5 +24,5 @@
     </application>
 
 	<uses-sdk android:minSdkVersion="4"/>
-	<uses-permission android:name="android.permission.READ_PHONE_STATE"></uses-permission>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"></uses-permission>
 </manifest> 
