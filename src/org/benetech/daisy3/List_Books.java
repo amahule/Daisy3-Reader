@@ -1,6 +1,7 @@
 package org.benetech.daisy3;
 
 import java.io.File;
+import java.util.Vector;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -43,9 +44,9 @@ public class List_Books extends ListActivity{
 		File daisy3_books_path = new File(daisy3_books);
 
 		// List of Daisy 3 books present at the specified location
-		String[] Books = daisy3_books_path.list();
-		
-		//remove the entries that OS X creates with 
+		String[] Books_All = daisy3_books_path.list();
+		Vector<String> Books_vector = new Vector<String>();
+
 		
 		// The daisy3 directory does not exist
 		if(!daisy3_books_path.exists()){
@@ -54,16 +55,27 @@ public class List_Books extends ListActivity{
 		}
 		
 		// No books found in the daisy3 directory
-		else if(Books == null || Books.length == 0){
+		else if(Books_All == null || Books_All.length == 0){
 			call_alert_dialog("No books found",
 					"No books were found inside the daisy3 directory on sdcard");
 		}
 		
-		
-		
 		// Books found inside the daisy3 directory
 		else{
+
+			/* Remove the directory entries that OS X sometimes creates while copying the files to SD card
+			 * These directory names start with "._"
+			 */ 
+			for(String entry: Books_All){
+				if(!(entry.substring(0, 2).equals("._"))){
+					Books_vector.add(entry);
+				}
+			}
 			
+			String Books[] = new String[Books_vector.size()];
+			
+			Books = (String[])Books_vector.toArray(new String[0]);
+
 			// Populate the view with the String array
 			setListAdapter(new ArrayAdapter<String>(this, R.layout.list_item, Books));
 	
@@ -81,13 +93,16 @@ public class List_Books extends ListActivity{
 						
 						// List all the files inside a daisy3 book.
 						String [] files_in_daisy3book = file.list();
+						
+						System.out.println("******** "+files_in_daisy3book.length+" **********");
 						if(files_in_daisy3book != null && files_in_daisy3book.length > 0){
 							
 							// Look for a file with .xml extension among all files inside a daisy3 book directory
 							for(String str_file : files_in_daisy3book){
+								System.out.println("*****************"+str_file+"***********");
 
-								// XML file found.
-								if(str_file.substring(str_file.length() - 4).equals(".xml")){
+								// XML file found. Make sure it is not a OS X dirty file
+								if((str_file.substring(str_file.length() - 4).equals(".xml")) && !str_file.substring(0,2).equals("._")){
 
 									// Absolute path name for the XML file
 									file_to_be_opened = file.getAbsolutePath() + "/" + str_file;
